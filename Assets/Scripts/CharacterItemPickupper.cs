@@ -12,15 +12,23 @@ public class CharacterItemPickupper : MonoBehaviour
 
     // Reference to the ItemHolderSlot on the character
     public Transform itemHolderSlot;
+    [SerializeField] string closeItem = "";
+    [SerializeField] string carryItem = "";
+
+    [SerializeField] GameObject closeCustomer = null;
 
     void Update()
     {
         // Check if the player presses the pick up key (e.g., spacebar)
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            if (nearbyItem != null)
+            if (closeItem != "")
             {
                 PickUpItem();
+            }
+            else if (carryItem != "" && closeCustomer != null)
+            {
+                GiveItem();
             }
         }
     }
@@ -29,11 +37,16 @@ public class CharacterItemPickupper : MonoBehaviour
     void OnTriggerEnter2D(Collider2D other)
     {
         // Check if the collider is tagged as "Item"
-        if (other.CompareTag("Item"))
+        if (other.CompareTag("ItemTable"))
         {
-            // Store the reference to the nearby item
-            nearbyItem = other.gameObject;
-            Debug.Log("Item nearby: " + nearbyItem.name);
+            closeItem = other.GetComponent<ItemHandler>().GetItemName();
+            //nearbyItem = other.gameObject;
+
+            Debug.Log("Item nearby: " + closeItem);
+        }
+        else if(other.CompareTag("Customer"))
+        {
+            closeCustomer = other.gameObject;
         }
     }
 
@@ -41,23 +54,39 @@ public class CharacterItemPickupper : MonoBehaviour
     void OnTriggerExit2D(Collider2D other)
     {
         // Check if the collider is tagged as "Item"
-        if (other.CompareTag("Item"))
+        if (other.CompareTag("ItemTable"))
         {
+            Debug.Log("Left item: " + closeItem);
+            
             // Clear the reference to the nearby item
-            nearbyItem = null;
-            Debug.Log("Left item: " + other.gameObject.name);
+            closeItem = "";
+                    }
+        else if (other.CompareTag("Customer"))
+        {
+            closeCustomer = null;
         }
     }
 
     // Function to handle item pickup
     void PickUpItem()
     {
-        Debug.Log("Picked up: " + nearbyItem.name);
-
+        //Debug.Log("Picked up: " + nearbyItem.name);
+        carryItem = closeItem;
         // Instantiate the prefab item into the ItemHolderSlot
         Instantiate(prefabItem, itemHolderSlot.position, itemHolderSlot.rotation, itemHolderSlot);
-
-        // Optionally destroy the nearby item after "picking it up"
-        Destroy(nearbyItem);
     }
+
+    void GiveItem()
+    {
+        closeCustomer.GetComponent<CustomerController>().ReceiveItem(carryItem);
+        DropItem();
+    }
+
+    void DropItem()
+    {
+        Destroy(itemHolderSlot.GetChild(0).gameObject);
+        carryItem = "";
+    }
+
+
 }

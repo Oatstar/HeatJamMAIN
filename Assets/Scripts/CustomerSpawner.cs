@@ -13,6 +13,13 @@ public class CustomerSpawner : MonoBehaviour
 
     public float moveSpeed = 2f;
 
+    public static CustomerSpawner instance;
+
+    private void Awake()
+    {
+        instance = this;
+    }
+
     void Start()
     {
         SpawnCustomer();
@@ -26,14 +33,42 @@ public class CustomerSpawner : MonoBehaviour
         if (spawnPos == null)
             return;
 
-        Instantiate(customerPrefab, spawnPos);
+        GameObject spawnedCustomer = Instantiate(customerPrefab, spawnPos);
+        GameObject targetBench = SetTarget(spawnPos);
 
-        SetTarget();
+        spawnedCustomer.GetComponent<CustomerController>().SetStartValues(targetBench, spawnPos);
     }
 
-    void SetTarget()
+    GameObject SetTarget(Transform spawnPos)
     {
+        GameObject targetBench = null;
 
+        targetBench = (spawnPos == spawnpointTop) ? GetRandomFreeBench("top") : GetRandomFreeBench("bot");
+               
+        chairTaken[targetBench.GetComponent<ChairController>().GetChairId()] = true;
+        return targetBench;
+    }
+
+    GameObject GetRandomFreeBench(string side)
+    {
+        int rangeMin = 0;
+        int rangeMax = 8;
+        int benchId = -1;
+        if(side == "bot")
+        {
+            rangeMin = 8;
+            rangeMax = allChairs.Length;
+        }
+
+        while (true)
+        {
+            benchId = Random.Range(rangeMin, rangeMax);
+            if (!chairTaken[benchId])
+            {
+                break;
+            }
+        }
+        return allChairs[benchId];
     }
 
     Transform GetSpawnPos()
@@ -100,4 +135,8 @@ public class CustomerSpawner : MonoBehaviour
 
     }
 
+    public void ReleaseBench(int id)
+    {
+        chairTaken[id] = false;
+    }
 }
