@@ -8,9 +8,10 @@ public class CustomerController : MonoBehaviour
 {
     Transform originalSpawnPos;
     GameObject targetBench;
+    ChairController currentChairController;
     int benchId;
-    public float moveSpeed = 2f;
-    float originalMoveSpeed = 10f;
+    public float moveSpeed = 3f;
+    float originalMoveSpeed = 3f;
     [SerializeField] bool movingToBenchHorizontal = true;
     [SerializeField] bool movingToBenchVertical = false;
 
@@ -18,16 +19,18 @@ public class CustomerController : MonoBehaviour
     [SerializeField] bool moveOut = false;
     [SerializeField] bool sunBathing = false;
     [SerializeField] bool requestingSomething = false;
+    [SerializeField] bool parasoled = false;
 
-    [SerializeField] float timer = 15f;
-    [SerializeField] float maxTimer = 15f;
+    [SerializeField] float timer = 30f;
+    float maxTimer = 30f;
 
     [SerializeField] float burnTimer = 0f;
-    [SerializeField] float maxBurnTimer = 20f;
+    float maxBurnTimer = 35f;
 
     [SerializeField] float burnModifier = 1f;
+    float defaultBurnModifier = 1f;
 
-    int triggerRequestChance = 9;
+    int triggerRequestChance = 2;
     float intervalTicker = 0f;
 
     [SerializeField] string requestedItem = "";
@@ -35,11 +38,20 @@ public class CustomerController : MonoBehaviour
        
     public Slider burnSlider;
     public Slider timerSlider;
+
+    Animator animator;
+
+    private void Awake()
+    {
+        animator = GetComponentInChildren<Animator>();
+    }
     public void SetStartValues(GameObject target, Transform spawnPos)
     {
+        int currentDay = GameMasterManager.instance.GetCurrentDay();
         targetBench = target;
         originalSpawnPos = spawnPos;
-        benchId = targetBench.GetComponent<ChairController>().GetChairId();
+        currentChairController = targetBench.GetComponent<ChairController>();
+        benchId = currentChairController.GetChairId();
         timerSlider.value = timerSlider.maxValue;
         requestedItemImage.gameObject.SetActive(false);
 
@@ -86,20 +98,33 @@ public class CustomerController : MonoBehaviour
         {
             TickBurnTimer();
         }
+
+        if (moveSpeed != 0)
+        {
+            animator.SetBool("running", true);
+        }
+        else
+        {
+            animator.SetBool("running", false);
+        }
     }
 
     void TickBurnTimer()
     {
+        burnModifier = defaultBurnModifier;
+
         if (requestingSomething)
-            burnModifier = 1.5f;
-        else
-            burnModifier = 1f;
+            burnModifier += 0.5f;
+        
+        if (currentChairController.GetParasolActive())
+            burnModifier = burnModifier * 0.66f;
 
         burnTimer += Time.deltaTime * burnModifier;
         burnSlider.value = Tools.instance.Normalize(0, maxBurnTimer, burnTimer);
         if (burnTimer >= maxBurnTimer)
         {
             Debug.Log("Customer burned in the sun!");
+            GameMasterManager.instance.CustomerBurned();
             DestroySelf();
         }
     }
@@ -120,6 +145,8 @@ public class CustomerController : MonoBehaviour
         requestedItemImage.sprite = RequestManager.instance.GetItemSpriteByName(requestedItem);
         requestedItemImage.gameObject.SetActive(true);
         //requestText.text = requestedItem;
+
+        SoundManager.instance.PlayRequestPopup();
     }
 
     public void ReceiveItem(string itemName)
@@ -130,12 +157,17 @@ public class CustomerController : MonoBehaviour
             requestedItem = "";
             requestingSomething = false;
             requestedItemImage.gameObject.SetActive(false);
+
+            SoundManager.instance.PlayRequestReceiveSound(itemName);
         }
         else
         {
             Debug.Log("Incorrect item received");
+            SoundManager.instance.PlayWrongSound();
         }
     }
+
+
 
     public void RefreshSlider()
     {
@@ -165,7 +197,7 @@ public class CustomerController : MonoBehaviour
     private void MoveToBenchVertical()
     {
         // Move only on the x axis towards the target bench
-        if (transform.position.y < targetBench.transform.position.y - 0.64f)
+        if (transform.position.y < targetBench.transform.position.y - 0.01f)
         {
             transform.position += Vector3.up * moveSpeed * Time.deltaTime;
         }
@@ -201,7 +233,7 @@ public class CustomerController : MonoBehaviour
     {
         // Move only on the x axis towards the target bench
         //Debug.Log("T: "+ transform.position.y + " ---- " + originalSpawnPos.position.y);
-        if (transform.position.y > originalSpawnPos.position.y - 0.92f)
+        if (transform.position.y > originalSpawnPos.position.y - 0.01f)
         {
             transform.position += Vector3.down * moveSpeed * Time.deltaTime;
         }
@@ -226,6 +258,7 @@ public class CustomerController : MonoBehaviour
 
     void DestroySelf()
     {
+        GameMasterManager.instance.CustomerBurned();
         CustomerSpawner.instance.ReleaseBench(benchId);
         Destroy(this.gameObject);
     }

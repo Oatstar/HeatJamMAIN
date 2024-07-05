@@ -7,6 +7,7 @@ TagManager:
   - Item
   - ItemTable
   - Customer
+  - ChairTrigger
   layers:
   - Default
   - TransparentFX

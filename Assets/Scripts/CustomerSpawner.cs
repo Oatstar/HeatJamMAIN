@@ -5,7 +5,7 @@ using UnityEngine;
 public class CustomerSpawner : MonoBehaviour
 {
     public bool[] chairTaken = new bool[16];
-    public GameObject[] allChairs = new GameObject[16];
+    public Sprite[] chairSprites;
 
     public GameObject customerPrefab;
     public Transform spawnpointTop;
@@ -20,23 +20,19 @@ public class CustomerSpawner : MonoBehaviour
         instance = this;
     }
 
-    void Start()
-    {
-        SpawnCustomer();
-    }
-
-    void SpawnCustomer()
+    public bool SpawnCustomer()
     {
         Transform spawnPos;
         spawnPos = GetSpawnPos();
 
         if (spawnPos == null)
-            return;
+            return false;
 
         GameObject spawnedCustomer = Instantiate(customerPrefab, spawnPos);
         GameObject targetBench = SetTarget(spawnPos);
 
         spawnedCustomer.GetComponent<CustomerController>().SetStartValues(targetBench, spawnPos);
+        return true;
     }
 
     GameObject SetTarget(Transform spawnPos)
@@ -57,7 +53,7 @@ public class CustomerSpawner : MonoBehaviour
         if(side == "bot")
         {
             rangeMin = 8;
-            rangeMax = allChairs.Length;
+            rangeMax = SunchairController.instance.allChairs.Length;
         }
 
         while (true)
@@ -68,7 +64,7 @@ public class CustomerSpawner : MonoBehaviour
                 break;
             }
         }
-        return allChairs[benchId];
+        return SunchairController.instance.allChairs[benchId];
     }
 
     Transform GetSpawnPos()
@@ -138,5 +134,19 @@ public class CustomerSpawner : MonoBehaviour
     public void ReleaseBench(int id)
     {
         chairTaken[id] = false;
+    }
+
+    public void ResetState()
+    {
+        for (int i = 0; i < chairTaken.Length; i++)
+        {
+            chairTaken[i] = false;
+        }
+
+        GameObject[] allCustomers = GameObject.FindGameObjectsWithTag("Customer");
+        foreach (GameObject customer in allCustomers)
+        {
+            Destroy(customer);
+        }
     }
 }

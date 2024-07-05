@@ -14,17 +14,37 @@ public class CharacterItemPickupper : MonoBehaviour
     public Transform itemHolderSlot;
     [SerializeField] string closeItem = "";
     [SerializeField] string carryItem = "";
+    [SerializeField] GameObject closeChair = null;
 
     [SerializeField] GameObject closeCustomer = null;
 
+
+    public void ResetScript()
+    {
+        if(itemHolderSlot.childCount > 0)
+            DropItem();
+        closeItem = "";
+        carryItem = "";
+        closeChair = null;
+        closeCustomer = null;
+        nearbyItem = null;
+    }
+
     void Update()
     {
+        if (Time.timeScale <= 0)
+            return;
+
         // Check if the player presses the pick up key (e.g., spacebar)
         if (Input.GetKeyDown(KeyCode.Space))
         {
             if (closeItem != "")
             {
                 PickUpItem();
+            }
+            else if (carryItem == "Parasol" && closeChair != null)
+            {
+                PlaceParasol();
             }
             else if (carryItem != "" && closeCustomer != null)
             {
@@ -48,6 +68,12 @@ public class CharacterItemPickupper : MonoBehaviour
         {
             closeCustomer = other.gameObject;
         }
+        else if (other.CompareTag("ChairTrigger"))
+        {
+            closeChair = other.gameObject;
+        }
+
+
     }
 
     // This function is called when the character exits a trigger collider
@@ -65,21 +91,47 @@ public class CharacterItemPickupper : MonoBehaviour
         {
             closeCustomer = null;
         }
+        else if (other.CompareTag("ChairTrigger"))
+        {
+            closeChair = null;
+        }
     }
 
     // Function to handle item pickup
     void PickUpItem()
     {
         //Debug.Log("Picked up: " + nearbyItem.name);
+
+        if(itemHolderSlot.childCount != 0)
+        {
+            DropItem();
+        }
         carryItem = closeItem;
         // Instantiate the prefab item into the ItemHolderSlot
-        Instantiate(prefabItem, itemHolderSlot.position, itemHolderSlot.rotation, itemHolderSlot);
+        GameObject spawnedCarryItem = Instantiate(prefabItem, itemHolderSlot.position, itemHolderSlot.rotation, itemHolderSlot);
+        SpriteRenderer spawnedCarrySpriteRen = spawnedCarryItem.GetComponent<SpriteRenderer>();
+        spawnedCarrySpriteRen.sprite = RequestManager.instance.GetItemSpriteByName(carryItem);
     }
 
     void GiveItem()
     {
         closeCustomer.GetComponent<CustomerController>().ReceiveItem(carryItem);
         DropItem();
+    }
+
+    void PlaceParasol()
+    {
+        if (closeChair == null)
+        {
+            Debug.Log("No close chair");
+            return;
+        }
+
+        closeChair.GetComponentInParent<ChairController>().SetParasol();
+        Destroy(itemHolderSlot.GetChild(0).gameObject);
+        carryItem = "";
+
+        SoundManager.instance.PlayParasoldrop();
     }
 
     void DropItem()

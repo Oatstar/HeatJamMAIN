@@ -21,7 +21,7 @@ public class RequestManager : MonoBehaviour
 
     public string GetRandomItemRequest()
     {
-        int randomVal = UnityEngine.Random.Range(0, allRequestItems.Length);
+        int randomVal = UnityEngine.Random.Range(0, allRequestItems.Length-1);
         return allRequestItems[randomVal];
     }
 
