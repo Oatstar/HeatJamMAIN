@@ -21,11 +21,11 @@ public class CustomerController : MonoBehaviour
     [SerializeField] bool requestingSomething = false;
     [SerializeField] bool parasoled = false;
 
-    [SerializeField] float timer = 30f;
-    float maxTimer = 30f;
+    [SerializeField] float timer = 20f;
+    float maxTimer = 20f;
 
     [SerializeField] float burnTimer = 0f;
-    float maxBurnTimer = 35f;
+    float maxBurnTimer = 28f;
 
     [SerializeField] float burnModifier = 1f;
     float defaultBurnModifier = 1f;
@@ -53,7 +53,7 @@ public class CustomerController : MonoBehaviour
         currentChairController = targetBench.GetComponent<ChairController>();
         benchId = currentChairController.GetChairId();
         timerSlider.value = timerSlider.maxValue;
-        requestedItemImage.gameObject.SetActive(false);
+        requestedItemImage.transform.parent.gameObject.SetActive(false);
 
         timer = maxTimer;
         burnTimer = 0;
@@ -83,7 +83,7 @@ public class CustomerController : MonoBehaviour
             timer -= Time.deltaTime;
             intervalTicker += Time.deltaTime;
             TickBurnTimer();
-            if (intervalTicker > 1)
+            if (intervalTicker > 5)
             {
                 intervalTicker = 0;
                 RollForRandomRequest();
@@ -131,6 +131,9 @@ public class CustomerController : MonoBehaviour
     
     void RollForRandomRequest()
     {
+        if (requestingSomething)
+            return;
+
         int randomChance = UnityEngine.Random.Range(0, 10);
         if(randomChance < triggerRequestChance) //Default 20% chance per second
         {
@@ -143,7 +146,7 @@ public class CustomerController : MonoBehaviour
         requestingSomething = true;
         requestedItem = RequestManager.instance.GetRandomItemRequest();
         requestedItemImage.sprite = RequestManager.instance.GetItemSpriteByName(requestedItem);
-        requestedItemImage.gameObject.SetActive(true);
+        requestedItemImage.transform.parent.gameObject.SetActive(true);
         //requestText.text = requestedItem;
 
         SoundManager.instance.PlayRequestPopup();
@@ -156,9 +159,13 @@ public class CustomerController : MonoBehaviour
             Debug.Log("Correct item received");
             requestedItem = "";
             requestingSomething = false;
-            requestedItemImage.gameObject.SetActive(false);
+            requestedItemImage.transform.parent.gameObject.SetActive(false);
 
             SoundManager.instance.PlayRequestReceiveSound(itemName);
+        }
+        else if(itemName == "Parasol")
+        {
+            //
         }
         else
         {
@@ -260,6 +267,8 @@ public class CustomerController : MonoBehaviour
     {
         GameMasterManager.instance.CustomerBurned();
         CustomerSpawner.instance.ReleaseBench(benchId);
+        GameMasterManager.instance.OnDelayFindAllCustomers();
+
         Destroy(this.gameObject);
     }
 

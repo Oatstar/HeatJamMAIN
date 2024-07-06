@@ -83,10 +83,21 @@ public class GameMasterManager : MonoBehaviour
         timer += Time.deltaTime;
         if (timer > spawnInterval)
         {
+            FindAllCustomers();
+
+            if (currentSpawnCount >= maxSpawnCount)
+                return;
+
             SpawnCustomer();
             timer = 0f;
         }
     }
+
+    public void OnDelayFindAllCustomers()
+    {
+        Invoke("FindAllCustomers", 1f);
+    }
+
 
     public void FindAllCustomers()
     {
@@ -118,6 +129,7 @@ public class GameMasterManager : MonoBehaviour
         SoundManager.instance.PlayBurning();
 
         burnCount++;
+        failCountText.text = "BURNS: " + burnCount;
         if(burnCount >= 3)
         {
             Debug.Log("Three burn victims! Game over!");

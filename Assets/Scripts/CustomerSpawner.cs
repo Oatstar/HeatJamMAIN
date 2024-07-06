@@ -11,7 +11,7 @@ public class CustomerSpawner : MonoBehaviour
     public Transform spawnpointTop;
     public Transform spawnpointBot;
 
-    public float moveSpeed = 2f;
+    float moveSpeed = 3f;
 
     public static CustomerSpawner instance;
 

@@ -12,8 +12,8 @@ public class ChairController : MonoBehaviour
     [SerializeField] Sprite parasol20;
     [SerializeField] Sprite parasolBroken;
     [SerializeField] GameObject parasolObject;
-    [SerializeField] float parasolHealth = 30f;
-    float parasolMaxHealth = 30f;
+    [SerializeField] float parasolHealth = 18f;
+    float parasolMaxHealth = 18f;
     bool parasolActive = false;
 
     private void Start()

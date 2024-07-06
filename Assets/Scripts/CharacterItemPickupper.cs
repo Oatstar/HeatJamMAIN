@@ -19,6 +19,10 @@ public class CharacterItemPickupper : MonoBehaviour
     [SerializeField] GameObject closeCustomer = null;
 
 
+    private void Start()
+    {
+        itemHolderSlot.transform.GetChild(0).gameObject.SetActive(false);
+    }
     public void ResetScript()
     {
         if(itemHolderSlot.childCount > 0)
@@ -38,16 +42,25 @@ public class CharacterItemPickupper : MonoBehaviour
         // Check if the player presses the pick up key (e.g., spacebar)
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            if (closeItem != "")
+            if(closeItem != "" && carryItem != "")
             {
+                Debug.Log("Repicking");
+                DropItem();
+                PickUpItem();
+            }
+            else if (closeItem != "")
+            {
+                Debug.Log("Picking");
                 PickUpItem();
             }
             else if (carryItem == "Parasol" && closeChair != null)
             {
+                Debug.Log("Placing Parasol");
                 PlaceParasol();
             }
-            else if (carryItem != "" && closeCustomer != null)
+            else if (carryItem != "" && carryItem != "Parasol" && closeCustomer != null)
             {
+                Debug.Log("Giving Item");
                 GiveItem();
             }
         }
@@ -82,11 +95,11 @@ public class CharacterItemPickupper : MonoBehaviour
         // Check if the collider is tagged as "Item"
         if (other.CompareTag("ItemTable"))
         {
-            Debug.Log("Left item: " + closeItem);
+            Debug.Log("Left proximity of: " + closeItem);
             
             // Clear the reference to the nearby item
             closeItem = "";
-                    }
+        }
         else if (other.CompareTag("Customer"))
         {
             closeCustomer = null;
@@ -103,14 +116,21 @@ public class CharacterItemPickupper : MonoBehaviour
         //Debug.Log("Picked up: " + nearbyItem.name);
 
         if(itemHolderSlot.childCount != 0)
-        {
             DropItem();
-        }
+
+        if (closeItem == "")
+            return;
+
         carryItem = closeItem;
+        Debug.Log("Carry item: " + carryItem);
         // Instantiate the prefab item into the ItemHolderSlot
-        GameObject spawnedCarryItem = Instantiate(prefabItem, itemHolderSlot.position, itemHolderSlot.rotation, itemHolderSlot);
+        //GameObject spawnedCarryItem = Instantiate(prefabItem, itemHolderSlot.position, itemHolderSlot.rotation, itemHolderSlot);
+        GameObject spawnedCarryItem = itemHolderSlot.transform.GetChild(0).gameObject;
+        spawnedCarryItem.GetComponent<ItemHandler>().SetName(carryItem);
         SpriteRenderer spawnedCarrySpriteRen = spawnedCarryItem.GetComponent<SpriteRenderer>();
         spawnedCarrySpriteRen.sprite = RequestManager.instance.GetItemSpriteByName(carryItem);
+        spawnedCarryItem.SetActive(true);
+        SoundManager.instance.PlayBoxClick();
     }
 
     void GiveItem()
@@ -128,15 +148,14 @@ public class CharacterItemPickupper : MonoBehaviour
         }
 
         closeChair.GetComponentInParent<ChairController>().SetParasol();
-        Destroy(itemHolderSlot.GetChild(0).gameObject);
-        carryItem = "";
+        DropItem();
 
         SoundManager.instance.PlayParasoldrop();
     }
 
     void DropItem()
     {
-        Destroy(itemHolderSlot.GetChild(0).gameObject);
+        itemHolderSlot.GetChild(0).gameObject.SetActive(false);
         carryItem = "";
     }
 

@@ -18,6 +18,8 @@ public class SoundManager : MonoBehaviour
     [SerializeField] AudioSource gameOver;
     [SerializeField] AudioSource requestPopup;
 
+    bool audioState = true;
+
     public static SoundManager instance;
     private void Awake()
     {
@@ -100,5 +102,15 @@ public class SoundManager : MonoBehaviour
                 PlayTowel();
                 break;
         }
+    }
+
+    public void ToggleMute()
+    {
+        audioState = !audioState;
+
+        if (audioState)
+            AudioListener.volume = 1;
+        else
+            AudioListener.volume = 0;
     }
 }

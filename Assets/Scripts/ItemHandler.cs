@@ -10,4 +10,9 @@ public class ItemHandler : MonoBehaviour
     {
         return itemName;
     }
+
+    public void SetName(string name)
+    {
+        itemName = name;
+    }
 }
